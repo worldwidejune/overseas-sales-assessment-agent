@@ -304,59 +304,96 @@
 
         function generateAnswer(question, history) {
             const q = question.toLowerCase();
+            console.log('分析问题:', q);
 
-            // 识别计算需求并引导
-            if (q.includes('计算') || q.includes('算') || q.includes('奖金')) {
-                return '好的!我可以帮您计算销售奖金。请点击上方的"💰 奖金计算器"标签,然后选择地区、角色并输入相关信息,我会自动为您计算奖金。需要我详细解释计算规则吗?';
+            // 优先级1: 识别计算需求并引导
+            if (q.includes('计算') || q.includes('算') || q.includes('奖金计算')) {
+                return '好的!我可以帮您计算销售奖金。\n\n请点击上方的"💰 奖金计算器"标签,然后:\n1. 选择地区(北美/非北美)\n2. 选择销售角色(直客/渠道/基干)\n3. 输入月薪基数和综合完成率\n\n系统会自动计算并显示详细结果!\n\n需要我详细解释计算规则吗?';
             }
 
-            // 查找知识库
-            if (q.includes('综合完成率')) {
-                if (q.includes('直客')) return knowledgeBase.comprehensiveRate.direct;
-                if (q.includes('渠道')) return knowledgeBase.comprehensiveRate.channel;
-                if (q.includes('基干')) return knowledgeBase.comprehensiveRate.leader;
-                return Object.values(knowledgeBase.comprehensiveRate).join('\n\n');
+            // 优先级2: 综合完成率相关问题
+            if (q.includes('综合完成率') || q.includes('综合率') || q.includes('完成率怎么算')) {
+                if (q.includes('直客')) {
+                    return knowledgeBase.comprehensiveRate.direct;
+                }
+                if (q.includes('渠道')) {
+                    return knowledgeBase.comprehensiveRate.channel;
+                }
+                if (q.includes('基干')) {
+                    return knowledgeBase.comprehensiveRate.leader;
+                }
+                return '📊 综合完成率计算规则:\n\n' + Object.values(knowledgeBase.comprehensiveRate).join('\n\n');
             }
 
-            if (q.includes('收入完成率')) {
-                return Object.values(knowledgeBase.revenueRate).join('\n\n');
+            // 优先级3: 收入完成率
+            if (q.includes('收入完成率') || q.includes('收入怎么算')) {
+                return '📈 收入完成率计算:\n\n' + Object.values(knowledgeBase.revenueRate).join('\n\n');
             }
 
-            if (q.includes('考核分数')) {
-                return knowledgeBase.overallScore;
+            // 优先级4: 考核分数
+            if (q.includes('考核分数') || q.includes('分数')) {
+                return '📝 ' + knowledgeBase.overallScore;
             }
 
-            if (q.includes('固浮') || q.includes('薪酬结构')) {
-                const region = q.includes('北美') ? 'na' : 'non_na';
-                return Object.values(knowledgeBase.salaryStructure[region]).join('\n\n');
+            // 优先级5: 固浮比/薪酬结构
+            if (q.includes('固浮') || q.includes('固浮比') || q.includes('薪酬结构') || q.includes('薪资结构')) {
+                let result = '💰 薪酬结构/固浮比:\n\n';
+                if (q.includes('北美') || q.includes('na')) {
+                    result += '🇺🇸 北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n';
+                } else if (q.includes('非北美') || q.includes('non_na')) {
+                    result += '🌍 非北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
+                } else {
+                    result += '🇺🇸 北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n\n';
+                    result += '🌍 非北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
+                }
+                return result;
             }
 
-            if (q.includes('发放时间') || q.includes('什么时候发放')) {
-                return Object.values(knowledgeBase.payout).join('\n\n');
+            // 优先级6: 发放时间
+            if (q.includes('发放时间') || q.includes('什么时候发') || q.includes('何时发放') || q.includes('结算时间')) {
+                return '📅 奖金发放时间:\n\n' + Object.values(knowledgeBase.payout).join('\n\n');
             }
 
-            if (q.includes('起付线')) {
-                return Object.values(knowledgeBase.payout).join('\n\n');
+            // 优先级7: 起付线
+            if (q.includes('起付线') || q.includes('起付') || q.includes('发放门槛')) {
+                return '🎯 奖金起付线:\n\n' + Object.values(knowledgeBase.payout).join('\n\n') + '\n\n注意: 起付线是发放奖金的最低完成率要求,低于起付线将不发放奖金。';
             }
 
+            // 优先级8: 北美奖金计算
             if (q.includes('北美') && (q.includes('奖金') || q.includes('计算'))) {
-                return knowledgeBase.salaryStructure.na.direct + '\n' + knowledgeBase.payout.na;
+                return '🇺🇸 北美奖金计算:\n\n' + knowledgeBase.salaryStructure.na.direct + '\n' + knowledgeBase.salaryStructure.na.channel + '\n\n' + knowledgeBase.payout.na;
             }
 
-            if (q.includes('试用期')) {
-                return '试用期规则:\n• 北美地区: 入职当月即参与考核\n• 非北美地区: 入职3个月内不参与考核\n• 中国大陆: 试用期不参与考核';
+            // 优先级9: 试用期
+            if (q.includes('试用期') || q.includes('新员工') || q.includes('入职')) {
+                return '👤 试用期规则:\n\n• 🇺🇸 北美地区: 入职当月即参与考核\n• 🌍 非北美地区: 入职3个月内不参与考核\n\n新员工在试用期的奖金计算方式有所不同,具体请参考考核规则文档。';
             }
 
-            if (q.includes('离职')) {
-                return '离职结算规则:\n• 美洲: 需要结算奖金\n• 契约性欧洲国家: 需要结算奖金\n• 香港: 需要结算奖金\n• 中国大陆: 需要结算奖金\n• 其他国家: 按当地法律规定执行';
+            // 优先级10: 离职结算
+            if (q.includes('离职') || q.includes('离职结算') || q.includes('离开')) {
+                return '🚪 离职结算规则:\n\n• 🇺🇸 美洲: 需要结算奖金\n• 🌍 契约性欧洲国家: 需要结算奖金\n• 🌍 香港: 需要结算奖金\n• 🇨🇳 中国大陆: 需要结算奖金\n• 🌍 其他国家: 按当地法律规定执行\n\n离职结算会根据实际工作时间和业绩完成情况计算。';
             }
 
-            if (q.includes('产假') || q.includes('休假')) {
-                return '产假规则:\n• 奖金基数不受产假影响\n• 产假期间仍可参与考核\n• 计算公式按正常规则执行\n需要帮您计算产假期间的奖金吗?';
+            // 优先级11: 产假/休假
+            if (q.includes('产假') || q.includes('休假') || q.includes('怀孕') || q.includes('休产')) {
+                return '👶 产假规则:\n\n• 奖金基数不受产假影响\n• 产假期间仍可参与考核\n• 计算公式按正常规则执行\n\n需要我帮您计算产假期间的奖金吗?只需点击"💰 奖金计算器"标签即可。';
+            }
+
+            // 优先级12: 问候
+            if (q.includes('你好') || q.includes('嗨') || q.includes('hi') || q.includes('hello')) {
+                return '您好!👋\n\n我是海外销售考核Agent,可以帮您:\n\n📊 查询考核规则\n• 综合完成率计算\n• 收入完成率计算\n• 薪酬结构/固浮比\n• 发放时间\n• 起付线\n• 试用期规则\n• 离职结算\n• 产假规则\n\n💰 计算奖金\n点击"💰 奖金计算器"标签即可\n\n请随时向我提问!';
             }
 
             // 无法识别问题,提供帮助
-            return `抱歉,我没有完全理解您的问题。我可以帮您:\n\n📊 查询规则:\n• 综合完成率计算\n• 收入完成率计算\n• 薪酬结构\n• 发放时间\n• 起付线\n• 试用期规则\n• 离职结算\n• 产假规则\n\n💰 计算奖金:\n点击"💰 奖金计算器"标签,选择地区和角色后输入数据即可\n\n您可以问我:"直客销售的综合完成率怎么计算?"`;
+            return `抱歉,我没有完全理解您的问题。😊\n\n我可以帮您:\n\n📊 查询规则:\n• 综合完成率计算\n• 收入完成率计算\n• 薪酬结构/固浮比\n• 发放时间\n• 起付线\n• 试用期规则\n• 离职结算\n• 产假规则\n\n💰 计算奖金:\n点击"💰 奖金计算器"标签即可\n\n\n💡 您可以试试:\n"直客销售的综合完成率怎么计算?"\n"北美的薪酬结构是什么?"\n"奖金什么时候发放?"`;
         }
 
         // 奖金计算器功能
