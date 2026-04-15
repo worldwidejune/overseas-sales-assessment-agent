@@ -468,29 +468,39 @@
             // 限制完成率最大值为300%
             achievementRate = Math.min(achievementRate, 300);
 
-            // 根据地区和角色获取浮动部分比例
+            // 根据地区和角色获取固浮比
             const fixedRatio = getFixedRatio(region, role);
-            const variableRatio = parseFloat(fixedRatio.split(':')[1]) / 100;
+            const ratioParts = fixedRatio.split(':');
+            const fixedPercent = parseFloat(ratioParts[0]) / 100; // 固定部分比例
+            const variablePercent = parseFloat(ratioParts[1]) / 100; // 浮动部分比例
+
+            // 固定年薪 = 月薪 × 12
+            const fixedAnnualSalary = monthlySalary * 12;
+
+            // 全年年薪 = 固定年薪 / 固定比例
+            const totalAnnualSalary = fixedAnnualSalary / fixedPercent;
+
+            // 目标销售奖金 = 全年年薪 × 浮动比例
+            const targetBonus = totalAnnualSalary * variablePercent;
 
             if (region === 'na') {
                 // 北美季度奖金计算
-                const annualSalary = monthlySalary * 12;
-                const quarterlySalary = annualSalary * variableRatio / 4; // 季度浮动薪资
+                const quarterlyBonus = targetBonus / 4; // 季度目标奖金
 
                 if (achievementRate >= 51 && achievementRate <= 100) {
-                    salesBonus = quarterlySalary * (achievementRate / 100) * 1;
-                    breakdown = `年薪: ¥${annualSalary.toLocaleString()}\n浮动部分: ${fixedRatio}\n季度基数: ¥${quarterlySalary.toLocaleString()}\n51%-100%区间: ¥${quarterlySalary.toLocaleString()} × ${(achievementRate/100).toFixed(2)} × 1 = ¥${salesBonus.toLocaleString()}`;
+                    salesBonus = quarterlyBonus * (achievementRate / 100) * 1;
+                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n季度基数: ¥${quarterlyBonus.toLocaleString()}\n\n51%-100%区间:\n¥${quarterlyBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} × 1 = ¥${salesBonus.toLocaleString()}`;
                 } else if (achievementRate > 100 && achievementRate <= 160) {
-                    const base = quarterlySalary * 1;
-                    const excess = quarterlySalary * ((achievementRate - 100) / 100) * 2.5;
+                    const base = quarterlyBonus * 1;
+                    const excess = quarterlyBonus * ((achievementRate - 100) / 100) * 2.5;
                     salesBonus = base + excess;
-                    breakdown = `年薪: ¥${annualSalary.toLocaleString()}\n浮动部分: ${fixedRatio}\n季度基数: ¥${quarterlySalary.toLocaleString()}\n100%部分: ¥${quarterlySalary.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n超过100%部分: ¥${quarterlySalary.toLocaleString()} × ${((achievementRate-100)/100).toFixed(2)} × 2.5 = ¥${excess.toLocaleString()}`;
+                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n季度基数: ¥${quarterlyBonus.toLocaleString()}\n\n100%部分:\n¥${quarterlyBonus.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n\n超过100%部分:\n¥${quarterlyBonus.toLocaleString()} × ${((achievementRate-100)/100).toFixed(2)} × 2.5 = ¥${excess.toLocaleString()}\n\n总计: ¥${salesBonus.toLocaleString()}`;
                 } else if (achievementRate > 160) {
-                    const base = quarterlySalary * 1;
-                    const tier1 = quarterlySalary * (60 / 100) * 2.5;
-                    const tier2 = quarterlySalary * ((achievementRate - 160) / 100) * 1;
+                    const base = quarterlyBonus * 1;
+                    const tier1 = quarterlyBonus * (60 / 100) * 2.5;
+                    const tier2 = quarterlyBonus * ((achievementRate - 160) / 100) * 1;
                     salesBonus = base + tier1 + tier2;
-                    breakdown = `年薪: ¥${annualSalary.toLocaleString()}\n浮动部分: ${fixedRatio}\n季度基数: ¥${quarterlySalary.toLocaleString()}\n100%部分: ¥${quarterlySalary.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n101%-160%: ¥${quarterlySalary.toLocaleString()} × 0.6 × 2.5 = ¥${tier1.toLocaleString()}\n超过160%部分: ¥${quarterlySalary.toLocaleString()} × ${((achievementRate-160)/100).toFixed(2)} × 1 = ¥${tier2.toLocaleString()}`;
+                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n季度基数: ¥${quarterlyBonus.toLocaleString()}\n\n100%部分:\n¥${quarterlyBonus.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n\n101%-160%:\n¥${quarterlyBonus.toLocaleString()} × 0.6 × 2.5 = ¥${tier1.toLocaleString()}\n\n超过160%部分:\n¥${quarterlyBonus.toLocaleString()} × ${((achievementRate-160)/100).toFixed(2)} × 1 = ¥${tier2.toLocaleString()}\n\n总计: ¥${salesBonus.toLocaleString()}`;
                 } else {
                     // 低于51%,不发放奖金
                     salesBonus = 0;
@@ -498,9 +508,8 @@
                 }
             } else if (region === 'non_na') {
                 // 非北美年度奖金计算
-                const annualSalary = monthlySalary * 12;
-                salesBonus = annualSalary * variableRatio * (achievementRate / 100);
-                breakdown = `年薪: ¥${annualSalary.toLocaleString()}\n浮动部分: ${fixedRatio}\n年度奖金 = ¥${annualSalary.toLocaleString()} × ${(achievementRate/100).toFixed(2)} = ¥${salesBonus.toLocaleString()}`;
+                salesBonus = targetBonus * (achievementRate / 100);
+                breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n年度奖金:\n¥${targetBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} = ¥${salesBonus.toLocaleString()}`;
             }
 
             return { salesBonus, breakdown };
