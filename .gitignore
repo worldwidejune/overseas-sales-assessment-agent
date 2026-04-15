@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# WorkBuddy
+.workbuddy/
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+
+# Node modules (if any)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Other
+.env
+.env.local
