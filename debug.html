@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试版 - 测试Agent回答</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .chat-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #4f46e5;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user {
+            background: #6366f1;
+            color: white;
+            margin-left: auto;
+        }
+        .ai {
+            background: #e5e7eb;
+            color: #333;
+        }
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Agent调试版</h1>
+        <p>这个页面用于测试和调试Agent的回答功能</p>
+        
+        <div class="chat-box" id="chat-box"></div>
+        
+        <div class="input-area">
+            <input type="text" id="question-input" placeholder="输入你的问题..." />
+            <button onclick="sendQuestion()">发送</button>
+        </div>
+        
+        <h3>调试日志:</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${time}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function addMessage(text, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        const knowledgeBase = {
+            comprehensiveRate: {
+                direct: "直客销售: 综合完成率 = 个人收入完成率×50% + 团队收入完成率×20% + 综合考核分数×30%",
+                channel: "渠道销售: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%",
+                leader: "销售基干: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%"
+            },
+            revenueRate: {
+                non_na: "海外非北美&中国大陆: 收入完成率 = (YTD考核收入 - 超期6个月扣减) / 全年收入KPI",
+                na: "北美地区: 收入完成率 = YTD实收收入 / YTD实收收入KPI"
+            },
+            overallScore: "综合考核分数 = 年度目标考核分数(占20%) + 年度绩效考核分数(占80%)",
+            salaryStructure: {
+                na: {
+                    direct: "固浮比50:50,季度发放",
+                    channel: "固浮比70:30,季度发放"
+                },
+                non_na: {
+                    direct: "固浮比60:40,年度发放",
+                    channel: "固浮比70:30,年度发放"
+                }
+            },
+            payout: {
+                na: "季度奖金: 季度末结算,次月发放。完成率上限300%,起付线51%。",
+                non_na: "年度奖金: 年末统一结算,次年1月发放。完成率上限300%,个人无起付线,基干60%。"
+            }
+        };
+
+        function generateAnswer(question, history) {
+            addLog('=== generateAnswer开始 ===');
+            addLog('收到问题: ' + question);
+            addLog('历史记录: ' + JSON.stringify(history));
+            
+            const q = question.toLowerCase();
+            addLog('转换为小写: ' + q);
+
+            // 优先级1: 识别计算需求并引导
+            if (q.includes('计算') || q.includes('算') || q.includes('奖金计算')) {
+                addLog('匹配到计算需求');
+                return '好的!我可以帮您计算销售奖金。\n\n请点击上方的"💰 奖金计算器"标签,然后:\n1. 选择地区(北美/非北美)\n2. 选择销售角色(直客/渠道/基干)\n3. 输入月薪基数和综合完成率\n\n系统会自动计算并显示详细结果!\n\n需要我详细解释计算规则吗?';
+            }
+
+            // 优先级2: 综合完成率相关问题
+            if (q.includes('综合完成率') || q.includes('综合率') || q.includes('完成率怎么算')) {
+                addLog('匹配到综合完成率问题');
+                if (q.includes('直客')) {
+                    return knowledgeBase.comprehensiveRate.direct;
+                }
+                if (q.includes('渠道')) {
+                    return knowledgeBase.comprehensiveRate.channel;
+                }
+                if (q.includes('基干')) {
+                    return knowledgeBase.comprehensiveRate.leader;
+                }
+                return '📊 综合完成率计算规则:\n\n' + Object.values(knowledgeBase.comprehensiveRate).join('\n\n');
+            }
+
+            // 优先级3: 收入完成率
+            if (q.includes('收入完成率') || q.includes('收入怎么算')) {
+                addLog('匹配到收入完成率问题');
+                return '📈 收入完成率计算:\n\n' + Object.values(knowledgeBase.revenueRate).join('\n\n');
+            }
+
+            // 优先级4: 考核分数
+            if (q.includes('考核分数') || q.includes('分数')) {
+                addLog('匹配到考核分数问题');
+                return '📝 ' + knowledgeBase.overallScore;
+            }
+
+            // 优先级5: 固浮比/薪酬结构
+            if (q.includes('固浮') || q.includes('固浮比') || q.includes('薪酬结构') || q.includes('薪资结构')) {
+                addLog('匹配到薪酬结构问题');
+                let result = '💰 薪酬结构/固浮比:\n\n';
+                if (q.includes('北美') || q.includes('na')) {
+                    result += '🇺🇸 北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n';
+                } else if (q.includes('非北美') || q.includes('non_na')) {
+                    result += '🌍 非北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
+                } else {
+                    result += '🇺🇸 北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n\n';
+                    result += '🌍 非北美地区:\n';
+                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
+                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
+                }
+                return result;
+            }
+
+            // 优先级6: 发放时间
+            if (q.includes('发放') || q.includes('什么时候') || q.includes('什么时候发')) {
+                addLog('匹配到发放时间问题');
+                let result = '📅 奖金发放时间:\n\n';
+                result += '🇺🇸 北美地区:\n' + knowledgeBase.payout.na + '\n\n';
+                result += '🌍 非北美地区:\n' + knowledgeBase.payout.non_na;
+                return result;
+            }
+
+            // 优先级7: 起付线
+            if (q.includes('起付') || q.includes('起付线') || q.includes('门槛')) {
+                addLog('匹配到起付线问题');
+                return '📊 起付线规则:\n\n🇺🇸 北美地区:\n• 所有销售: 51%\n\n🌍 非北美地区:\n• 个人销售: 无起付线\n• 销售基干: 60%';
+            }
+
+            // 优先级8: 北美奖金计算
+            if (q.includes('北美奖金') || q.includes('北美怎么算')) {
+                addLog('匹配到北美奖金计算问题');
+                return '🇺🇸 北美季度奖金计算(三段式):\n\n• 51%-100%: 系数1\n• 101%-160%: 超过100%部分系数2.5\n• 161%-300%: 超过160%部分系数1\n\n起付线: 51%\n发放频率: 季度';
+            }
+
+            // 优先级9: 试用期规则
+            if (q.includes('试用') || q.includes('试用期')) {
+                addLog('匹配到试用期问题');
+                return '📋 试用期规则:\n\n🇺🇸 北美地区:\n入职当月即参与考核\n\n🌍 非北美地区:\n入职3个月内不参与考核';
+            }
+
+            // 优先级10: 离职结算
+            if (q.includes('离职') || q.includes('离职结算')) {
+                addLog('匹配到离职结算问题');
+                return '👋 离职结算规则:\n\n需要结算奖金的国家/地区:\n• 美洲(北美、南美)\n• 契约性欧洲国家\n• 香港\n• 中国大陆\n\n其他国家通常不结算奖金';
+            }
+
+            // 优先级11: 产假规则
+            if (q.includes('产假') || q.includes('休产假')) {
+                addLog('匹配到产假问题');
+                return '👶 产假规则:\n\n产假期间奖金基数不受影响\n\n如果产假期间达成目标,仍可按照正常规则发放奖金\n\n具体结算需咨询HR部门';
+            }
+
+            // 优先级12: 问候
+            if (q.includes('你好') || q.includes('嗨') || q.includes('hi') || q.includes('hello')) {
+                addLog('匹配到问候');
+                return '你好!👋 我是海外销售考核Agent!\n\n我可以帮你:\n💬 查询考核规则\n💰 计算销售奖金\n📊 解读奖金政策\n\n有什么可以帮助你的吗?';
+            }
+
+            // 无法识别
+            addLog('无法识别的问题');
+            return '🤔 抱歉,我不太理解你的问题。\n\n我可以回答以下类型的问题:\n\n📊 考核规则:\n• 综合完成率怎么计算?\n• 收入完成率如何计算?\n• 不同地区的固浮比是多少?\n\n💰 奖金政策:\n• 奖金什么时候发放?\n• 起付线是多少?\n• 产假期间怎么算?\n• 离职后奖金如何结算?\n\n🎯 快速操作:\n• 输入"计算"或"算一下" → 使用奖金计算器\n• 输入"你好" → 开始对话\n\n你可以尝试问上面这些问题,或者告诉我你想了解什么!';
+        }
+
+        function sendQuestion() {
+            addLog('=== sendQuestion被调用 ===');
+            const input = document.getElementById('question-input');
+            const question = input.value.trim();
+            addLog('用户输入: ' + question);
+            
+            if (!question) {
+                addLog('问题为空,返回');
+                return;
+            }
+
+            addMessage(question, 'user');
+            input.value = '';
+
+            const answer = generateAnswer(question, []);
+            addLog('生成的答案: ' + answer.substring(0, 50) + '...');
+            
+            setTimeout(() => {
+                addMessage(answer, 'ai');
+                addLog('答案已显示');
+            }, 500);
+        }
+
+        // 允许Enter键发送
+        document.getElementById('question-input').addEventListener('keypress', function(e) {
+            if (e.keyCode === 13) {
+                sendQuestion();
+            }
+        });
+
+        addLog('页面加载完成,可以开始测试');
+    </script>
+</body>
+</html>
