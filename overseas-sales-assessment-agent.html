@@ -82,9 +82,9 @@
                 <!-- Input Area -->
                 <div class="input-area bg-white border-t p-4">
                     <div class="flex gap-2">
-                        <input type="text" id="question-input" placeholder="请输入您的问题..." 
+                        <input type="text" id="question-input" placeholder="请输入您的问题..."
                             class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            onkeypress="if(event.key==='Enter')sendQuestion()">
+                            onkeypress="if(event.keyCode===13)sendQuestion()">
                         <button onclick="sendQuestion()" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors">
                             发送
                         </button>
