@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面</title>
+    <script>
+        function testFunction() {
+            alert('JavaScript正常工作!');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM已加载');
+            const btn = document.getElementById('test-btn');
+            if (btn) {
+                btn.addEventListener('click', testFunction);
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>测试页面</h1>
+    <p>点击下面的按钮测试JavaScript是否工作:</p>
+    <button id="test-btn" onclick="testFunction()">点击测试</button>
+</body>
+</html>
