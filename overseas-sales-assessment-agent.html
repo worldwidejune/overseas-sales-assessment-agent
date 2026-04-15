@@ -181,7 +181,7 @@
                 }
             },
             payout: {
-                na: "北美季度奖金: 季度末结算,次月发放。完成率上限300%,起付线51%。",
+                na: "北美季度奖金: 季度末结算,次月发放。完成率上限300%,起付线>50%。",
                 non_na: "非北美年度奖金: 年末统一结算,次年Q1发放。完成率上限300%,个人无起付线,基干60%。"
             }
         };
@@ -320,7 +320,7 @@
                 
                 // 北美地区
                 if (q.includes('北美') || q.includes('na')) {
-                    return '📋 北美地区考核规则概要\n\n💰 薪酬结构:\n• 直客销售: 固浮比50:50\n• 渠道销售: 固浮比70:30\n\n📅 发放时间:\n• 北美季度发放(季度末结算,次月发放)\n\n📊 奖金计算:\n• 三段式计算:\n  - 51%-100%: 系数1\n  - 101%-160%: 超过100%部分系数2.5\n  - 161%-300%: 超过160%部分系数1\n• 起付线: 51%\n• 完成率上限: 300%\n\n👥 试用期:\n• 入职当月即参与考核\n\n👋 离职:\n• 需要结算奖金\n\n👶 产假:\n• 奖金基数不受影响\n\n需要了解更详细的规则吗?';
+                    return '📋 北美地区考核规则概要\n\n💰 薪酬结构:\n• 直客销售: 固浮比50:50\n• 渠道销售: 固浮比70:30\n\n📅 发放时间:\n• 北美季度发放(季度末结算,次月发放)\n\n📊 奖金计算:\n• 三段式计算:\n  - >50%-100%: 系数1\n  - 101%-160%: 超过100%部分系数2.5\n  - 161%-300%: 超过160%部分系数1\n• 起付线: >50%\n• 完成率上限: 300%\n\n👥 试用期:\n• 入职当月即参与考核\n\n👋 离职:\n• 需要结算奖金\n\n👶 产假:\n• 奖金基数不受影响\n\n需要了解更详细的规则吗?';
                 }
                 
                 // 非北美地区
@@ -329,7 +329,7 @@
                 }
                 
                 // 没有指定地区,显示所有地区概要
-                return '📋 考核规则概要\n\n🇺🇸 北美地区:\n• 固浮比: 直客50:50, 渠道70:30\n• 发放: 北美季度发放(季度末结算,次月发放)\n• 计算: 三段式(51%起付)\n• 试用期: 入职当月即参与\n\n🌍 非北美地区:\n• 固浮比: 直客60:40, 渠道70:30\n• 发放: 非北美年度发放(年末结算,次年Q1发放)\n• 计算: 年薪×浮动比例×完成率(基干60%起付)\n• 试用期: 入职3个月内不参与\n\n🎯 想了解哪个地区的详细规则?\n• 试试问: "北美规则是什么"\n• 或问: "综合完成率怎么计算"\n• 或问: "奖金怎么算"';
+                return '📋 考核规则概要\n\n🇺🇸 北美地区:\n• 固浮比: 直客50:50, 渠道70:30\n• 发放: 北美季度发放(季度末结算,次月发放)\n• 计算: 三段式(>50%起付)\n• 试用期: 入职当月即参与\n\n🌍 非北美地区:\n• 固浮比: 直客60:40, 渠道70:30\n• 发放: 非北美年度发放(年末结算,次年Q1发放)\n• 计算: 年薪×浮动比例×完成率(基干60%起付)\n• 试用期: 入职3个月内不参与\n\n🎯 想了解哪个地区的详细规则?\n• 试试问: "北美规则是什么"\n• 或问: "综合完成率怎么计算"\n• 或问: "奖金怎么算"';
             }
 
             // 优先级2: 综合完成率相关问题
@@ -486,9 +486,9 @@
             if (region === 'na') {
                 // 北美全年奖金计算(三段式)
 
-                if (achievementRate >= 51 && achievementRate <= 100) {
+                if (achievementRate > 50 && achievementRate <= 100) {
                     salesBonus = targetBonus * (achievementRate / 100) * 1;
-                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n51%-100%区间:\n¥${targetBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} × 1 = ¥${salesBonus.toLocaleString()}`;
+                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n>50%-100%区间:\n¥${targetBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} × 1 = ¥${salesBonus.toLocaleString()}`;
                 } else if (achievementRate > 100 && achievementRate <= 160) {
                     const base = targetBonus * 1;
                     const excess = targetBonus * ((achievementRate - 100) / 100) * 2.5;
@@ -501,9 +501,9 @@
                     salesBonus = base + tier1 + tier2;
                     breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n100%部分:\n¥${targetBonus.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n\n101%-160%:\n¥${targetBonus.toLocaleString()} × 0.6 × 2.5 = ¥${tier1.toLocaleString()}\n\n超过160%部分:\n¥${targetBonus.toLocaleString()} × ${((achievementRate-160)/100).toFixed(2)} × 1 = ¥${tier2.toLocaleString()}\n\n总计: ¥${salesBonus.toLocaleString()}`;
                 } else {
-                    // 低于51%,不发放奖金
+                    // 低于等于50%,不发放奖金
                     salesBonus = 0;
-                    breakdown = `完成率${achievementRate}%低于起付线51%,不发放奖金`;
+                    breakdown = `完成率${achievementRate}%低于起付线>50%,不发放奖金`;
                 }
             } else if (region === 'non_na') {
                 // 非北美年度奖金计算
@@ -521,14 +521,15 @@
 
             // 起付线警告
             const thresholdWarning = document.getElementById('threshold-warning');
-            const threshold = region === 'na' ? 51 : region === 'non_na' ? (role === 'leader' ? 60 : 0) : 0;
+            const threshold = region === 'na' ? 50 : region === 'non_na' ? (role === 'leader' ? 60 : 0) : 0;
 
+            const thresholdText = region === 'na' ? '>50%' : (role === 'leader' ? '60%' : '无');
             if (achievementRate < threshold) {
-                thresholdWarning.textContent = `⚠️ 起付线: ${threshold}% - 未达到起付线,不能发放奖金`;
+                thresholdWarning.textContent = `⚠️ 起付线: ${thresholdText} - 未达到起付线,不能发放奖金`;
                 document.getElementById('threshold-section').className = 'bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl';
                 document.getElementById('threshold-section').querySelector('p').className = 'text-red-800 text-sm';
             } else {
-                thresholdWarning.textContent = `✅ 起付线: ${threshold}% - 已达到起付线,可以发放奖金`;
+                thresholdWarning.textContent = `✅ 起付线: ${thresholdText} - 已达到起付线,可以发放奖金`;
                 document.getElementById('threshold-section').className = 'bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl';
                 document.getElementById('threshold-section').querySelector('p').className = 'text-green-800 text-sm';
             }
