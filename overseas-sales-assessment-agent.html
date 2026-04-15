@@ -532,7 +532,11 @@
         }
 
         // 初始化
-        updateCalculator();
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面已加载,初始化中...');
+            updateCalculator();
+            console.log('初始化完成');
+        });
     </script>
 </body>
 </html>
