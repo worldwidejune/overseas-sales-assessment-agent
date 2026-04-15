@@ -20,6 +20,13 @@
         .message-ai {
             background: #f3f4f6;
         }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .animate-bounce {
+            animation: bounce 0.6s ease-in-out infinite;
+        }
         .input-area {
             box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
         }
@@ -58,14 +65,14 @@
                         <div class="ml-3 flex-1">
                             <div class="message-ai rounded-2xl rounded-tl-none p-4">
                                 <p class="text-gray-800">您好!我是海外销售考核Agent,可以帮您解答关于TCI海外销售考核规则的问题。</p>
-                                <p class="text-gray-800 mt-2">您可以问我:</p>
+                                <p class="text-gray-800 mt-2">我能帮您:</p>
                                 <ul class="mt-2 space-y-1 text-gray-700">
-                                    <li>• "直客销售的综合完成率怎么计算?"</li>
-                                    <li>• "北美地区的奖金计算规则是什么?"</li>
-                                    <li>• "不同地区的固浮比是多少?"</li>
-                                    <li>• "离职奖金怎么结算?"</li>
-                                    <li>• "产假期间的奖金怎么计算?"</li>
+                                    <li>📊 查询考核规则和计算公式</li>
+                                    <li>💰 计算销售奖金</li>
+                                    <li>📖 解读各类考核指标</li>
+                                    <li>❓ 回答关于考核体系的任何问题</li>
                                 </ul>
+                                <p class="text-gray-800 mt-2">请随时向我提问!</p>
                             </div>
                         </div>
                     </div>
@@ -224,6 +231,9 @@
             document.getElementById(`btn-${tab}`).classList.add('bg-white', 'text-purple-600', 'shadow-lg');
         }
 
+        // 对话历史上下文
+        let conversationHistory = [];
+
         // 问答功能
         function sendQuestion() {
             const input = document.getElementById('question-input');
@@ -234,11 +244,49 @@
             addMessage(question, 'user');
             input.value = '';
 
-            // 模拟AI回复
+            // 添加到对话历史
+            conversationHistory.push({ role: 'user', content: question });
+
+            // 显示"正在输入"状态
+            showTypingIndicator();
+
+            // 模拟AI思考和回复
             setTimeout(() => {
-                const answer = generateAnswer(question);
+                removeTypingIndicator();
+                const answer = generateAnswer(question, conversationHistory);
                 addMessage(answer, 'ai');
-            }, 500);
+                conversationHistory.push({ role: 'assistant', content: answer });
+            }, 800 + Math.random() * 700); // 随机延迟800-1500ms,更自然
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex items-start mb-4';
+            typingDiv.innerHTML = `
+                <div class="flex-shrink-0 w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                    AI
+                </div>
+                <div class="ml-3 flex-1">
+                    <div class="message-ai rounded-2xl rounded-tl-none p-4">
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
         }
 
         function addMessage(text, type) {
@@ -274,8 +322,16 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        function generateAnswer(question) {
+        function generateAnswer(question, history) {
             const lowerQuestion = question.toLowerCase();
+
+            // 检查是否需要引导到计算器
+            if (lowerQuestion.includes('计算') && (lowerQuestion.includes('奖金') || lowerQuestion.includes('多少钱'))) {
+                return `好的!我可以帮您计算销售奖金。请点击上方的"奖金计算器"标签,然后输入以下信息:\n\n📋 需要输入:\n1. 地区(北美/非北美)\n2. 销售角色(直客/渠道/基干)\n3. 月薪基数\n4. 综合完成率\n\n我会自动根据固浮比计算结果!`;
+            }
+
+            // 上下文感知:如果之前问过相关话题,提供更个性化的回答
+            const lastQuestion = history.length > 2 ? history[history.length - 3].content.toLowerCase() : '';
 
             if (lowerQuestion.includes('综合完成率') || lowerQuestion.includes('完成率计算')) {
                 const role = lowerQuestion.includes('直客') ? 'direct' :
@@ -345,10 +401,26 @@
             }
 
             if (lowerQuestion.includes('产假') || lowerQuestion.includes('休假')) {
-                return `${knowledgeBase.maternity}`;
+                return `${knowledgeBase.maternity}\n\n💡 需要计算产假期间的奖金吗?我可以根据您的月薪和固浮比帮您计算。`;
             }
 
-            return "抱歉,我没有找到相关的考核规则。您可以尝试询问关于:\n\n• 综合完成率计算\n• 收入完成率计算\n• 综合考核分数\n• 固浮比/薪酬结构\n• 发放时间\n• 起付线\n• 北美奖金计算\n• 试用期规则\n• 离职结算\n• 产假规则";
+            // 无法识别的问题,提供帮助
+            let helpSuggestions = "我可以帮您解答关于:\n\n";
+            helpSuggestions += "📊 **考核规则**\n";
+            helpSuggestions += "• 综合完成率如何计算\n";
+            helpSuggestions += "• 不同角色的考核指标\n";
+            helpSuggestions += "• 薪酬结构(固浮比)\n\n";
+            helpSuggestions += "💰 **奖金计算**\n";
+            helpSuggestions += "• 点击"奖金计算器"标签进行计算\n";
+            helpSuggestions += "• 支持北美和非北美地区\n";
+            helpSuggestions += "• 自动应用对应的固浮比\n\n";
+            helpSuggestions += "📖 **其他规则**\n";
+            helpSuggestions += "• 发放时间和周期\n";
+            helpSuggestions += "• 起付线要求\n";
+            helpSuggestions += "• 离职和休假规则\n\n";
+            helpSuggestions += "请告诉我您想了解哪方面的问题,或者直接点击"奖金计算器"开始计算!";
+
+            return helpSuggestions;
         }
 
         // 奖金计算器功能
