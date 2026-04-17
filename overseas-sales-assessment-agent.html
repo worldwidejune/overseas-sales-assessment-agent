@@ -40,13 +40,22 @@
         <!-- Employee Login Section -->
         <div id="login-section" class="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4">👤 身份验证</h2>
-            <div class="flex gap-2">
-                <input type="text" id="wechat-name" placeholder="请输入您的企微名..."
-                    class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    onkeypress="handleLoginPress(event)">
-                <button onclick="verifyEmployee()" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors">
-                    验证
+            <div class="text-center mb-6">
+                <p class="text-gray-600 mb-4">请使用企业微信扫码登录</p>
+                <button onclick="redirectToWeComAuth()" class="px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-lg font-medium">
+                    🏢 企业微信登录
                 </button>
+            </div>
+            <div class="border-t pt-4 mt-4">
+                <p class="text-center text-gray-500 text-sm mb-3">或使用开发模式登录</p>
+                <div class="flex gap-2">
+                    <input type="text" id="wechat-name" placeholder="请输入您的企微名..."
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        onkeypress="handleLoginPress(event)">
+                    <button onclick="verifyEmployee()" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors">
+                        验证
+                    </button>
+                </div>
             </div>
             <p id="login-error" class="mt-2 text-sm text-red-600 hidden"></p>
             <p id="login-success" class="mt-2 text-sm text-green-600 hidden"></p>
@@ -103,6 +112,87 @@
 
     <script>
         console.log('脚本开始加载...');
+
+        // API 配置
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000' // 本地开发
+            : 'https://your-backend-domain.com'; // 生产环境（需要修改为实际域名）
+
+        // 检查 URL 中是否有认证 token
+        function checkAuthToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const error = urlParams.get('error');
+
+            if (error) {
+                const loginError = document.getElementById('login-error');
+                if (error === 'not_found') {
+                    loginError.textContent = '❌ 您的账号不在员工数据库中，请联系HR';
+                } else if (error === 'auth_failed') {
+                    loginError.textContent = '❌ 企业微信认证失败，请重试';
+                }
+                loginError.classList.remove('hidden');
+                return false;
+            }
+
+            if (token) {
+                // 通过企微 OAuth 认证，使用 token 获取员工信息
+                fetchEmployeeInfo(token);
+                return true;
+            }
+
+            return false;
+        }
+
+        // 从后端获取员工信息
+        async function fetchEmployeeInfo(token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/employee?token=${encodeURIComponent(token)}`);
+                const data = await response.json();
+
+                if (response.ok && data) {
+                    // 认证成功
+                    currentEmployee = {
+                        name: data.name,
+                        region: data.region,
+                        role: data.role,
+                        wecomId: data.name // 暂时使用 name 作为标识
+                    };
+
+                    document.getElementById('login-success').textContent =
+                        `✅ 认证成功!您是 ${data.name}，所在地区: ${data.region === 'na' ? '北美' : '非北美'}`;
+                    document.getElementById('login-success').classList.remove('hidden');
+
+                    setTimeout(() => {
+                        document.getElementById('login-section').classList.add('hidden');
+                        document.getElementById('agent-interface').classList.remove('hidden');
+                        showWelcomeMessage();
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || '获取员工信息失败');
+                }
+            } catch (error) {
+                console.error('获取员工信息错误:', error);
+                const loginError = document.getElementById('login-error');
+                loginError.textContent = '❌ 认证信息无效，请重新登录';
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        // 跳转到企微授权页面
+        function redirectToWeComAuth() {
+            window.location.href = `${API_BASE_URL}/auth/wework`;
+        }
+
+        // 显示欢迎信息
+        function showWelcomeMessage() {
+            if (!currentEmployee) return;
+
+            const regionName = currentEmployee.region === 'na' ? '北美' : '非北美';
+            const roleName = currentEmployee.role === 'direct' ? '直客销售' : currentEmployee.role === 'channel' ? '渠道销售' : '销售基干';
+            document.getElementById('welcome-region-info').textContent =
+                `根据您的信息，您属于${regionName}地区，角色是${roleName}。我将为您展示对应地区的考核规则。`;
+        }
 
         // 员工数据维表（企微名 -> 地区信息）
         // 在实际使用中，这里应该从后端API获取
@@ -478,6 +568,16 @@
             console.log('页面已加载,初始化中...');
             console.log('sendQuestion 函数:', typeof sendQuestion);
             console.log('verifyEmployee 函数:', typeof verifyEmployee);
+            console.log('checkAuthToken 函数:', typeof checkAuthToken);
+
+            // 检查 URL 中的认证 token
+            const isAuthenticated = checkAuthToken();
+            if (isAuthenticated) {
+                console.log('已通过企微 OAuth 认证');
+            } else {
+                console.log('等待用户登录');
+            }
+
             console.log('初始化完成');
         });
 
