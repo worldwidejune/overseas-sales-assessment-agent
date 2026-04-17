@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>员工个人版 - 海外销售考核</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'Noto Sans SC', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f3f7 0%, #f2f4f6 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+        .result-card { background: #f9fafb; border-radius: 12px; padding: 20px; display: none; }
+        .result-value { font-size: 24px; font-weight: 600; color: #f43b478; margin-bottom: 6px; }
+        .result-breakdown { font-size: 13px; color: #6b7280; background: white; padding: 12px; border-radius: 8px; margin-top: 10px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center text-2xl font-bold mb-6">👥 员工个人奖金计算器</h1>
+        
+        <div class="card">
+            <div class="form-group">
+                <label class="form-label">员工姓名</label>
+                <input type="text" id="employeeName" placeholder="输入员工姓名" class="form-input" autocomplete="off">
+            </div>
+            
+            <div class="text-center mt-4">
+                <button onclick="calculatePersonalBonus()" class="btn-primary w-full">📊 计算奖金</button>
+            </div>
+        </div>
+        
+        <div id="resultCard" class="result-card">
+            <div class="result-label">销售奖金</div>
+            <div class="result-value" id="salesBonus">¥0</div>
+            <div class="result-breakdown" id="breakdown">请输入员工姓名查询</div>
+        </div>
+    </div>
+
+    <script>
+        // 员工数据库
+        const employeeDatabase = [
+            { name: "张三", region: "na", role: "direct", monthlySalary: 25000, achievementRate: 120 },
+            { name: "李四", region: "non_na", role: "channel", monthlySalary: 20000, achievementRate: 150 },
+            { name: "王五", region: "cn", role: "direct", monthlySalary: 30000, achievementRate: 90 }
+        ];
+
+        // 规则库
+        const ruleDatabase = {
+            na: {
+                direct: { ratio: 0.5, payout: "季度末结算,次月发放" },
+                channel: { ratio: 0.3, payout: "季度末结算,次月发放" }
+            },
+            non_na: {
+                direct: { ratio: 0.4, payout: "年末统一结算,次年1月发放" },
+                channel: { ratio: 0.3, payout: "年末统一结算,次年1月发放" }
+            },
+            cn: {
+                direct: { ratio: 0.5, payout: "年末统一结算,次年1月发放" },
+                channel: { ratio: 0.6, payout: "年末统一结算,次年1月发放" }
+            }
+        };
+
+        function calculatePersonalBonus() {
+            const name = document.getElementById('employeeName').value.trim();
+            if (!name) {
+                alert('请输入员工姓名');
+                return;
+            }
+
+            const employee = employeeDatabase.find(emp => emp.name === name);
+            if (!employee) {
+                alert('未找到该员工信息');
+                return;
+            }
+
+            const rules = ruleDatabase[employee.region][employee.role];
+            const annualSalary = employee.monthlySalary * 12;
+            const salesBonus = annualSalary * rules.ratio * (employee.achievementRate / 100);
+
+            document.getElementById('salesBonus').textContent = `¥${salesBonus.toLocaleString()}`;
+            document.getElementById('breakdown').innerHTML = `
+                <strong>员工:</strong> ${employee.name}<br>
+                <strong>地区:</strong> ${employee.region === 'na' ? '🇺🇸 北美' : employee.region === 'non_na' ? '🌍 非北美' : '🇨🇳 中国大陆'}<br/>
+                <strong>角色:</strong> ${employee.role === 'direct' ? '直客销售' : employee.role === 'channel' ? '渠道销售' : '销售基干'}<br/>
+                <strong>月薪:</strong> ¥${employee.monthlySalary.toLocaleString()}<br/>
+                <strong>全年年薪:</strong> ¥${annualSalary.toLocaleString()}<br/>
+                <strong>奖金比例:</strong> ${rules.ratio * 100}%<br/>
+                <strong>完成率:</strong> ${employee.achievementRate}%<br/>
+                <strong>发放时间:</strong> ${rules.payout}<br/>
+                <strong>计算:</strong> ¥${annualSalary.toLocaleString()} × ${(rules.ratio * 100).toFixed(0)}% × ${(employee.achievementRate / 100).toFixed(2)} = ¥${salesBonus.toLocaleString()}
+            `;
+
+            document.getElementById('resultCard').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
