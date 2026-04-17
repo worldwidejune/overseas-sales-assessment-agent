@@ -37,18 +37,24 @@
             <p class="text-gray-600">基于TCI海外销售考核规则文档的智能问答与奖金计算工具。</p>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex gap-4 mb-6">
-            <button onclick="switchTab('qa')" id="btn-qa" class="tab-btn flex-1 py-3 px-6 rounded-xl font-medium transition-all bg-white text-purple-600 shadow-lg">
-                💬 规则问答
-            </button>
-            <button onclick="switchTab('calculator')" id="btn-calculator" class="tab-btn flex-1 py-3 px-6 rounded-xl font-medium transition-all bg-gray-200 text-gray-600">
-                💰 奖金计算器
-            </button>
+        <!-- Employee Login Section -->
+        <div id="login-section" class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">👤 身份验证</h2>
+            <div class="flex gap-2">
+                <input type="text" id="wechat-name" placeholder="请输入您的企微名..."
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    onkeypress="handleLoginPress(event)">
+                <button onclick="verifyEmployee()" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors">
+                    验证
+                </button>
+            </div>
+            <p id="login-error" class="mt-2 text-sm text-red-600 hidden"></p>
+            <p id="login-success" class="mt-2 text-sm text-green-600 hidden"></p>
         </div>
 
-        <!-- Q&A Tab -->
-        <div id="tab-qa" class="tab-content">
+        <!-- Agent Main Interface (hidden until login) -->
+        <div id="agent-interface" class="hidden">
+
             <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div class="chat-container p-4" id="chat-messages">
                     <!-- Welcome Message -->
@@ -59,17 +65,17 @@
                         <div class="ml-3 flex-1">
                             <div class="message-ai rounded-2xl rounded-tl-none p-4">
                                 <p class="text-gray-800">您好!我是海外销售考核Agent,可以帮您解答关于TCI海外销售考核规则的问题。</p>
+                                <p class="text-gray-800 mt-2" id="welcome-region-info"></p>
                                 <p class="text-gray-800 mt-2">我能帮您:</p>
                                 <ul class="mt-2 space-y-1 text-gray-700">
                                     <li>📊 查询考核规则和计算公式</li>
-                                    <li>💰 计算销售奖金</li>
                                     <li>📖 解读各类考核指标</li>
                                     <li>❓ 回答关于考核体系的任何问题</li>
                                 </ul>
                                 <p class="text-gray-800 mt-2">示例问题:</p>
                                 <ul class="mt-2 space-y-1 text-gray-700">
                                     <li>销售考核公式是什么?</li>
-                                    <li>北美销售奖金怎么计算?</li>
+                                    <li>奖金怎么计算?</li>
                                     <li>起付线是多少?</li>
                                     <li>奖金发放频次?</li>
                                     <li>试用期考核规则?</li>
@@ -93,78 +99,24 @@
                 </div>
             </div>
         </div>
-
-        <!-- Calculator Tab -->
-        <div id="tab-calculator" class="tab-content hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-6">💰 销售奖金计算器</h2>
-
-                <!-- Input Section -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">地区</label>
-                        <select id="region" onchange="updateCalculator()"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="na">🇺🇸 北美</option>
-                            <option value="non_na">🌍 非北美</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">销售角色</label>
-                        <select id="role" onchange="updateCalculator()"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="direct">直客销售</option>
-                            <option value="channel">渠道销售</option>
-                            <option value="leader">销售基干</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">月薪基数 (¥)</label>
-                        <input type="number" id="monthlySalary" placeholder="例如: 20000" step="0.01"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            oninput="updateCalculator()">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">全年综合完成率 (%)</label>
-                        <input type="number" id="achievementRate" placeholder="例如: 120" step="0.01"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            oninput="updateCalculator()">
-                    </div>
-                </div>
-
-                <!-- Calculation Result -->
-                <div id="result-section" class="hidden">
-                    <div class="result-box rounded-2xl p-6 text-white mb-6">
-                        <h3 class="text-lg font-bold mb-4">📊 计算结果</h3>
-                        <div>
-                            <p class="text-purple-100 text-sm mb-1">销售奖金</p>
-                            <p id="salesBonus" class="text-3xl font-bold">¥0</p>
-                        </div>
-                        <div id="breakdown-section" class="mt-4 pt-4 border-t border-purple-400">
-                            <p class="text-purple-100 text-sm mb-2">计算明细:</p>
-                            <p id="breakdown" class="text-sm text-purple-50"></p>
-                        </div>
-                    </div>
-
-                    <!-- Payment Threshold -->
-                    <div id="threshold-section" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl">
-                        <p class="text-yellow-800 text-sm">
-                            <span id="threshold-warning">⚠️ 起付线: 0% - 可以发放奖金</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Region Info -->
-                <div class="mt-6 p-4 bg-gray-50 rounded-xl">
-                    <h4 class="font-medium text-gray-800 mb-2">📝 当前规则说明</h4>
-                    <p id="rule-description" class="text-sm text-gray-600"></p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
         console.log('脚本开始加载...');
+
+        // 员工数据维表（企微名 -> 地区信息）
+        // 在实际使用中，这里应该从后端API获取
+        const employeeDatabase = {
+            '张三': { region: 'na', role: 'direct', name: '张三' },
+            '李四': { region: 'na', role: 'channel', name: '李四' },
+            '王五': { region: 'non_na', role: 'direct', name: '王五' },
+            '赵六': { region: 'non_na', role: 'channel', name: '赵六' },
+            '孙七': { region: 'na', role: 'leader', name: '孙七' },
+            '周八': { region: 'non_na', role: 'leader', name: '周八' }
+        };
+
+        // 当前登录员工信息
+        let currentEmployee = null;
 
         // 考核规则知识库
         const knowledgeBase = {
@@ -181,35 +133,159 @@
             salaryStructure: {
                 na: {
                     direct: "固浮比50:50,季度发放",
-                    channel: "固浮比70:30,季度发放"
+                    channel: "固浮比70:30,季度发放",
+                    leader: "固浮比70:30,季度发放"
                 },
                 non_na: {
                     direct: "固浮比60:40,年度发放",
-                    channel: "固浮比70:30,年度发放"
+                    channel: "固浮比70:30,年度发放",
+                    leader: "固浮比70:30,年度发放"
                 }
             },
             payout: {
                 na: "北美季度奖金: 季度末结算,次月发放。完成率上限300%,起付线>50%。",
                 non_na: "非北美年度奖金: 年末统一结算,次年Q1发放。完成率上限300%,个人无起付线,基干60%。"
+            },
+            regionRules: {
+                na: {
+                    comprehensiveRate: "📊 北美地区综合完成率计算:\n\n" +
+                        "直客销售: 综合完成率 = 个人收入完成率×50% + 团队收入完成率×20% + 综合考核分数×30%\n" +
+                        "渠道销售: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%\n" +
+                        "销售基干: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%",
+                    revenueRate: "📈 北美地区收入完成率:\n\n收入完成率 = YTD实收收入 / YTD实收收入KPI",
+                    overallScore: "📝 综合考核分数 = 年度目标考核分数(占20%) + 年度绩效考核分数(占80%)",
+                    salaryStructure: "💰 北美薪酬结构:\n\n" +
+                        "直客销售: 固浮比50:50\n" +
+                        "渠道销售: 固浮比70:30\n" +
+                        "销售基干: 固浮比70:30\n\n" +
+                        "北美季度发放(季度末结算,次月发放)",
+                    bonusCalculation: "💵 北美奖金计算(三段式):\n\n" +
+                        "1. >50%-100%: 系数1\n" +
+                        "2. 101%-160%: 超过100%部分系数2.5\n" +
+                        "3. 161%-300%: 超过160%部分系数1\n\n" +
+                        "起付线: >50%\n" +
+                        "完成率上限: 300%",
+                    payout: "📅 北美奖金发放:\n\n" +
+                        "北美季度发放(季度末结算,次月发放)\n" +
+                        "完成率上限300%\n" +
+                        "起付线>50%",
+                    overview: "📋 北美地区考核规则概要\n\n" +
+                        "💰 薪酬结构:\n" +
+                        "• 直客销售: 固浮比50:50\n" +
+                        "• 渠道销售: 固浮比70:30\n" +
+                        "• 销售基干: 固浮比70:30\n\n" +
+                        "📅 发放时间:\n" +
+                        "• 北美季度发放(季度末结算,次月发放)\n\n" +
+                        "📊 奖金计算:\n" +
+                        "• 三段式计算:\n" +
+                        "  - >50%-100%: 系数1\n" +
+                        "  - 101%-160%: 超过100%部分系数2.5\n" +
+                        "  - 161%-300%: 超过160%部分系数1\n" +
+                        "• 起付线: >50%\n" +
+                        "• 完成率上限: 300%\n\n" +
+                        "👥 试用期:\n" +
+                        "• 入职当月即参与考核\n\n" +
+                        "👋 离职:\n" +
+                        "• 需要结算奖金\n\n" +
+                        "👶 产假:\n" +
+                        "• 奖金基数不受影响"
+                },
+                non_na: {
+                    comprehensiveRate: "📊 非北美地区综合完成率计算:\n\n" +
+                        "直客销售: 综合完成率 = 个人收入完成率×50% + 团队收入完成率×20% + 综合考核分数×30%\n" +
+                        "渠道销售: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%\n" +
+                        "销售基干: 综合完成率 = 团队收入完成率×40% + 团队毛利完成率×30% + 综合考核分数×30%",
+                    revenueRate: "📈 非北美地区收入完成率:\n\n收入完成率 = (YTD考核收入 - 超期6个月扣减) / 全年收入KPI",
+                    overallScore: "📝 综合考核分数 = 年度目标考核分数(占20%) + 年度绩效考核分数(占80%)",
+                    salaryStructure: "💰 非北美薪酬结构:\n\n" +
+                        "直客销售: 固浮比60:40\n" +
+                        "渠道销售: 固浮比70:30\n" +
+                        "销售基干: 固浮比70:30\n\n" +
+                        "非北美年度发放(年末结算,次年Q1发放)",
+                    bonusCalculation: "💵 非北美奖金计算:\n\n" +
+                        "销售奖金 = 年薪 × 浮动比例 × 综合完成率\n\n" +
+                        "起付线: 个人无,基干60%\n" +
+                        "完成率上限: 300%",
+                    payout: "📅 非北美奖金发放:\n\n" +
+                        "非北美年度发放(年末结算,次年Q1发放)\n" +
+                        "完成率上限300%\n" +
+                        "个人无起付线,基干60%",
+                    overview: "📋 非北美地区考核规则概要\n\n" +
+                        "💰 薪酬结构:\n" +
+                        "• 直客销售: 固浮比60:40\n" +
+                        "• 渠道销售: 固浮比70:30\n" +
+                        "• 销售基干: 固浮比70:30\n\n" +
+                        "📅 发放时间:\n" +
+                        "• 非北美年度发放(年末结算,次年Q1发放)\n\n" +
+                        "📊 奖金计算:\n" +
+                        "• 销售奖金 = 年薪 × 浮动比例 × 综合完成率\n" +
+                        "• 起付线: 个人无,基干60%\n" +
+                        "• 完成率上限: 300%\n\n" +
+                        "👥 试用期:\n" +
+                        "• 入职3个月内不参与考核\n\n" +
+                        "👋 离职:\n" +
+                        "• 需要结算奖金\n\n" +
+                        "👶 产假:\n" +
+                        "• 奖金基数不受影响"
+                }
             }
         };
 
-        // Tab切换
-        function switchTab(tab) {
-            console.log('切换到标签:', tab);
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('bg-white', 'text-purple-600', 'shadow-lg');
-                el.classList.add('bg-gray-200', 'text-gray-600');
-            });
-
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            document.getElementById(`btn-${tab}`).classList.remove('bg-gray-200', 'text-gray-600');
-            document.getElementById(`btn-${tab}`).classList.add('bg-white', 'text-purple-600', 'shadow-lg');
-        }
-
         // 对话历史上下文
         let conversationHistory = [];
+
+        // 企微名验证功能
+        function handleLoginPress(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                verifyEmployee();
+            }
+        }
+
+        function verifyEmployee() {
+            const wechatNameInput = document.getElementById('wechat-name');
+            const wechatName = wechatNameInput.value.trim();
+            const errorDiv = document.getElementById('login-error');
+            const successDiv = document.getElementById('login-success');
+
+            console.log('验证企微名:', wechatName);
+
+            if (!wechatName) {
+                errorDiv.textContent = '请输入企微名';
+                errorDiv.classList.remove('hidden');
+                successDiv.classList.add('hidden');
+                return;
+            }
+
+            // 查询员工数据
+            const employee = employeeDatabase[wechatName];
+
+            if (employee) {
+                // 验证成功
+                currentEmployee = employee;
+                errorDiv.classList.add('hidden');
+                successDiv.textContent = `✅ 验证成功!您是 ${employee.name}，所在地区: ${employee.region === 'na' ? '北美' : '非北美'}`;
+                successDiv.classList.remove('hidden');
+
+                // 隐藏登录界面，显示Agent界面
+                setTimeout(() => {
+                    document.getElementById('login-section').classList.add('hidden');
+                    document.getElementById('agent-interface').classList.remove('hidden');
+
+                    // 更新欢迎信息
+                    const regionName = employee.region === 'na' ? '北美地区' : '非北美地区';
+                    const roleName = employee.role === 'direct' ? '直客销售' : employee.role === 'channel' ? '渠道销售' : '销售基干';
+                    document.getElementById('welcome-region-info').textContent =
+                        `根据您的信息，您属于${regionName}，角色是${roleName}。我将为您展示对应地区的考核规则。`;
+                }, 1000);
+            } else {
+                // 验证失败
+                errorDiv.textContent = '❌ 未找到您的企微名，请联系HR确认';
+                errorDiv.classList.remove('hidden');
+                successDiv.classList.add('hidden');
+                currentEmployee = null;
+            }
+        }
 
         // 处理按键事件
         function handleKeyPress(event) {
@@ -317,93 +393,63 @@
             const q = question.toLowerCase();
             console.log('分析问题:', q);
 
-            // 优先级1: 识别计算需求并引导
-            if (q.includes('计算') || q.includes('算') || q.includes('奖金计算')) {
-                return '好的!我可以帮您计算销售奖金。\n\n请点击上方的"💰 奖金计算器"标签,然后:\n1. 选择地区(北美/非北美)\n2. 选择销售角色(直客/渠道/基干)\n3. 输入月薪基数和综合完成率\n\n系统会自动计算并显示详细结果!\n\n需要我详细解释计算规则吗?';
+            // 检查是否已登录
+            if (!currentEmployee) {
+                return '请先输入企微名进行身份验证。';
             }
 
-            // 优先级1.5: 宽泛规则查询(如"北美规则是什么"、"考核规则怎么样")
+            const region = currentEmployee.region;
+            const role = currentEmployee.role;
+
+            // 优先级1: 宽泛规则查询(如"规则是什么"、"考核规则怎么样")
             if (q.includes('规则') || q.includes('政策') || q.includes('怎么样') || q.includes('是什么')) {
                 console.log('匹配到宽泛规则问题');
-                
-                // 北美地区
-                if (q.includes('北美') || q.includes('na')) {
-                    return '📋 北美地区考核规则概要\n\n💰 薪酬结构:\n• 直客销售: 固浮比50:50\n• 渠道销售: 固浮比70:30\n\n📅 发放时间:\n• 北美季度发放(季度末结算,次月发放)\n\n📊 奖金计算:\n• 三段式计算:\n  - >50%-100%: 系数1\n  - 101%-160%: 超过100%部分系数2.5\n  - 161%-300%: 超过160%部分系数1\n• 起付线: >50%\n• 完成率上限: 300%\n\n👥 试用期:\n• 入职当月即参与考核\n\n👋 离职:\n• 需要结算奖金\n\n👶 产假:\n• 奖金基数不受影响\n\n需要了解更详细的规则吗?';
-                }
-                
-                // 非北美地区
-                if (q.includes('非北美') || q.includes('non_na') || q.includes('其他地区')) {
-                    return '📋 非北美地区考核规则概要\n\n💰 薪酬结构:\n• 直客销售: 固浮比60:40\n• 渠道销售: 固浮比70:30\n\n📅 发放时间:\n• 非北美年度发放(年末结算,次年Q1发放)\n\n📊 奖金计算:\n• 销售奖金 = 年薪 × 浮动比例 × 综合完成率\n• 起付线: 个人无,基干60%\n• 完成率上限: 300%\n\n👥 试用期:\n• 入职3个月内不参与考核\n\n👋 离职:\n• 需要结算奖金\n\n👶 产假:\n• 奖金基数不受影响\n\n需要了解更详细的规则吗?';
-                }
-                
-                // 没有指定地区,显示所有地区概要
-                return '📋 考核规则概要\n\n🇺🇸 北美地区:\n• 固浮比: 直客50:50, 渠道70:30\n• 发放: 北美季度发放(季度末结算,次月发放)\n• 计算: 三段式(>50%起付)\n• 试用期: 入职当月即参与\n\n🌍 非北美地区:\n• 固浮比: 直客60:40, 渠道70:30\n• 发放: 非北美年度发放(年末结算,次年Q1发放)\n• 计算: 年薪×浮动比例×完成率(基干60%起付)\n• 试用期: 入职3个月内不参与\n\n🎯 想了解哪个地区的详细规则?\n• 试试问: "北美规则是什么"\n• 或问: "综合完成率怎么计算"\n• 或问: "奖金怎么算"';
+                return knowledgeBase.regionRules[region].overview + '\n\n需要了解更详细的规则吗?您可以问我:\n• 综合完成率怎么计算?\n• 奖金怎么算?\n• 固浮比是多少?';
             }
 
             // 优先级2: 综合完成率相关问题
             if (q.includes('综合完成率') || q.includes('综合率') || q.includes('完成率怎么算')) {
-                if (q.includes('直客')) {
-                    return knowledgeBase.comprehensiveRate.direct;
-                }
-                if (q.includes('渠道')) {
-                    return knowledgeBase.comprehensiveRate.channel;
-                }
-                if (q.includes('基干')) {
-                    return knowledgeBase.comprehensiveRate.leader;
-                }
-                return '📊 综合完成率计算规则:\n\n' + Object.values(knowledgeBase.comprehensiveRate).join('\n\n');
+                return knowledgeBase.regionRules[region].comprehensiveRate;
             }
 
             // 优先级3: 收入完成率
             if (q.includes('收入完成率') || q.includes('收入怎么算')) {
-                return '📈 收入完成率计算:\n\n' + Object.values(knowledgeBase.revenueRate).join('\n\n');
+                return knowledgeBase.regionRules[region].revenueRate;
             }
 
             // 优先级4: 考核分数
             if (q.includes('考核分数') || q.includes('分数')) {
-                return '📝 ' + knowledgeBase.overallScore;
+                return knowledgeBase.regionRules[region].overallScore;
             }
 
             // 优先级5: 固浮比/薪酬结构
             if (q.includes('固浮') || q.includes('固浮比') || q.includes('薪酬结构') || q.includes('薪资结构')) {
-                let result = '💰 薪酬结构/固浮比:\n\n';
-                if (q.includes('北美') || q.includes('na')) {
-                    result += '🇺🇸 北美地区:\n';
-                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
-                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n';
-                } else if (q.includes('非北美') || q.includes('non_na')) {
-                    result += '🌍 非北美地区:\n';
-                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
-                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
-                } else {
-                    result += '🇺🇸 北美地区:\n';
-                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.na.direct + '\n';
-                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.na.channel + '\n\n';
-                    result += '🌍 非北美地区:\n';
-                    result += '• 直客销售: ' + knowledgeBase.salaryStructure.non_na.direct + '\n';
-                    result += '• 渠道销售: ' + knowledgeBase.salaryStructure.non_na.channel + '\n';
-                }
-                return result;
+                return knowledgeBase.regionRules[region].salaryStructure;
             }
 
-            // 优先级6: 发放时间
+            // 优先级6: 奖金计算
+            if (q.includes('奖金') || q.includes('计算') || q.includes('怎么算')) {
+                return knowledgeBase.regionRules[region].bonusCalculation;
+            }
+
+            // 优先级7: 发放时间
             if (q.includes('发放时间') || q.includes('什么时候发') || q.includes('何时发放') || q.includes('结算时间')) {
-                return '📅 奖金发放时间:\n\n' + Object.values(knowledgeBase.payout).join('\n\n');
+                return knowledgeBase.regionRules[region].payout;
             }
 
-            // 优先级7: 起付线
+            // 优先级8: 起付线
             if (q.includes('起付线') || q.includes('起付') || q.includes('发放门槛')) {
-                return '🎯 奖金起付线:\n\n' + Object.values(knowledgeBase.payout).join('\n\n') + '\n\n注意: 起付线是发放奖金的最低完成率要求,低于起付线将不发放奖金。';
-            }
-
-            // 优先级8: 北美奖金计算
-            if (q.includes('北美') && (q.includes('奖金') || q.includes('计算'))) {
-                return '🇺🇸 北美奖金计算:\n\n' + knowledgeBase.salaryStructure.na.direct + '\n' + knowledgeBase.salaryStructure.na.channel + '\n\n' + knowledgeBase.payout.na;
+                const regionName = region === 'na' ? '北美' : '非北美';
+                const threshold = region === 'na' ? '>50%' : (role === 'leader' ? '60%' : '无');
+                return `🎯 ${regionName}地区起付线:\n\n${threshold}\n\n注意: 起付线是发放奖金的最低完成率要求,低于起付线将不发放奖金。`;
             }
 
             // 优先级9: 试用期
             if (q.includes('试用期') || q.includes('新员工') || q.includes('入职')) {
-                return '👤 试用期规则:\n\n• 🇺🇸 北美地区: 入职当月即参与考核\n• 🌍 非北美地区: 入职3个月内不参与考核\n\n新员工在试用期的奖金计算方式有所不同,具体请参考考核规则文档。';
+                const probationRule = region === 'na' ?
+                    '🇺🇸 北美地区: 入职当月即参与考核' :
+                    '🌍 非北美地区: 入职3个月内不参与考核';
+                return '👤 试用期规则:\n\n' + probationRule + '\n\n新员工在试用期的奖金计算方式有所不同,具体请参考考核规则文档。';
             }
 
             // 优先级10: 离职结算
@@ -413,142 +459,25 @@
 
             // 优先级11: 产假/休假
             if (q.includes('产假') || q.includes('休假') || q.includes('怀孕') || q.includes('休产')) {
-                return '👶 产假规则:\n\n• 奖金基数不受产假影响\n• 产假期间仍可参与考核\n• 计算公式按正常规则执行\n\n需要我帮您计算产假期间的奖金吗?只需点击"💰 奖金计算器"标签即可。';
+                return '👶 产假规则:\n\n• 奖金基数不受产假影响\n• 产假期间仍可参与考核\n• 计算公式按正常规则执行';
             }
 
             // 优先级12: 问候
             if (q.includes('你好') || q.includes('嗨') || q.includes('hi') || q.includes('hello')) {
-                return '您好!👋\n\n我是海外销售考核Agent,可以帮您解答关于TCI海外销售考核规则的问题。\n\n我能帮您:\n\n📊 查询考核规则和计算公式\n💰 计算销售奖金\n📖 解读各类考核指标\n❓ 回答关于考核体系的任何问题\n\n请随时向我提问!';
+                const regionName = region === 'na' ? '北美' : '非北美';
+                return `您好!👋\n\n我是海外销售考核Agent,可以帮您解答关于TCI海外销售考核规则的问题。\n\n根据您的信息,您属于${regionName}地区。\n\n我能帮您:\n\n📊 查询考核规则和计算公式\n📖 解读各类考核指标\n❓ 回答关于考核体系的任何问题\n\n请随时向我提问!`;
             }
 
             // 无法识别问题,提供帮助
-            return `抱歉,我没有完全理解您的问题。😊\n\n我可以帮您:\n\n📊 查询规则:\n• 综合完成率计算\n• 收入完成率计算\n• 薪酬结构/固浮比\n• 发放时间\n• 起付线\n• 试用期规则\n• 离职结算\n• 产假规则\n\n💰 计算奖金:\n点击"💰 奖金计算器"标签即可\n\n\n💡 您可以试试:\n"销售考核公式是什么?"\n"北美销售奖金怎么计算?"\n"起付线是多少?"\n"奖金发放频次?"\n"试用期考核规则?"`;
-        }
-
-        // 奖金计算器功能
-        function updateCalculator() {
-            const region = document.getElementById('region').value;
-            const role = document.getElementById('role').value;
-            const monthlySalary = parseFloat(document.getElementById('monthlySalary').value) || 0;
-            const achievementRate = parseFloat(document.getElementById('achievementRate').value) || 0;
-
-            console.log('更新计算器:', region, role, monthlySalary, achievementRate);
-
-            // 更新规则说明
-            updateRuleDescription(region, role);
-
-            // 计算奖金
-            if (monthlySalary > 0 && achievementRate > 0) {
-                const result = calculateBonus(region, role, monthlySalary, achievementRate);
-                displayResult(result, achievementRate, region, role);
-            } else {
-                document.getElementById('result-section').classList.add('hidden');
-            }
-        }
-
-        function updateRuleDescription(region, role) {
-            const description = document.getElementById('rule-description');
-            let text = "";
-            const fixedRatio = getFixedRatio(region, role);
-
-            if (region === 'na') {
-                text = `北美年度奖金计算: 固浮比 ${fixedRatio}。${knowledgeBase.payout.na}\n年度销售奖金 = 全年目标奖金 × 奖金系数(三段式)`;
-            } else if (region === 'non_na') {
-                text = `非北美年度奖金计算: 固浮比 ${fixedRatio}。${knowledgeBase.payout.non_na}\n年度销售奖金 = 年薪 × 浮动部分比例 × 综合完成率`;
-            }
-
-            description.textContent = text;
-        }
-
-        function getFixedRatio(region, role) {
-            if (region === 'na') {
-                return role === 'direct' ? '50:50' : '70:30';
-            } else if (region === 'non_na') {
-                return role === 'direct' ? '60:40' : '70:30';
-            }
-            return '-';
-        }
-
-        function calculateBonus(region, role, monthlySalary, achievementRate) {
-            let salesBonus = 0;
-            let breakdown = "";
-
-            // 限制完成率最大值为300%
-            achievementRate = Math.min(achievementRate, 300);
-
-            // 根据地区和角色获取固浮比
-            const fixedRatio = getFixedRatio(region, role);
-            const ratioParts = fixedRatio.split(':');
-            const fixedPercent = parseFloat(ratioParts[0]) / 100; // 固定部分比例
-            const variablePercent = parseFloat(ratioParts[1]) / 100; // 浮动部分比例
-
-            // 固定年薪 = 月薪 × 12
-            const fixedAnnualSalary = monthlySalary * 12;
-
-            // 全年年薪 = 固定年薪 / 固定比例
-            const totalAnnualSalary = fixedAnnualSalary / fixedPercent;
-
-            // 目标销售奖金 = 全年年薪 × 浮动比例
-            const targetBonus = totalAnnualSalary * variablePercent;
-
-            if (region === 'na') {
-                // 北美全年奖金计算(三段式)
-
-                if (achievementRate > 50 && achievementRate <= 100) {
-                    salesBonus = targetBonus * (achievementRate / 100) * 1;
-                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n>50%-100%区间:\n¥${targetBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} × 1 = ¥${salesBonus.toLocaleString()}`;
-                } else if (achievementRate > 100 && achievementRate <= 160) {
-                    const base = targetBonus * 1;
-                    const excess = targetBonus * ((achievementRate - 100) / 100) * 2.5;
-                    salesBonus = base + excess;
-                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n100%部分:\n¥${targetBonus.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n\n超过100%部分:\n¥${targetBonus.toLocaleString()} × ${((achievementRate-100)/100).toFixed(2)} × 2.5 = ¥${excess.toLocaleString()}\n\n总计: ¥${salesBonus.toLocaleString()}`;
-                } else if (achievementRate > 160) {
-                    const base = targetBonus * 1;
-                    const tier1 = targetBonus * (60 / 100) * 2.5;
-                    const tier2 = targetBonus * ((achievementRate - 160) / 100) * 1;
-                    salesBonus = base + tier1 + tier2;
-                    breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n100%部分:\n¥${targetBonus.toLocaleString()} × 1 = ¥${base.toLocaleString()}\n\n101%-160%:\n¥${targetBonus.toLocaleString()} × 0.6 × 2.5 = ¥${tier1.toLocaleString()}\n\n超过160%部分:\n¥${targetBonus.toLocaleString()} × ${((achievementRate-160)/100).toFixed(2)} × 1 = ¥${tier2.toLocaleString()}\n\n总计: ¥${salesBonus.toLocaleString()}`;
-                } else {
-                    // 低于等于50%,不发放奖金
-                    salesBonus = 0;
-                    breakdown = `完成率${achievementRate}%低于起付线>50%,不发放奖金`;
-                }
-            } else if (region === 'non_na') {
-                // 非北美年度奖金计算
-                salesBonus = targetBonus * (achievementRate / 100);
-                breakdown = `月薪: ¥${monthlySalary.toLocaleString()}\n固定年薪: ¥${fixedAnnualSalary.toLocaleString()}\n全年年薪: ¥${totalAnnualSalary.toLocaleString()}\n固浮比: ${fixedRatio}\n目标奖金: ¥${targetBonus.toLocaleString()}\n\n年度奖金:\n¥${targetBonus.toLocaleString()} × ${(achievementRate/100).toFixed(2)} = ¥${salesBonus.toLocaleString()}`;
-            }
-
-            return { salesBonus, breakdown };
-        }
-
-        function displayResult(result, achievementRate, region, role) {
-            document.getElementById('result-section').classList.remove('hidden');
-            document.getElementById('salesBonus').textContent = `¥${result.salesBonus.toLocaleString()}`;
-            document.getElementById('breakdown').textContent = result.breakdown;
-
-            // 起付线警告
-            const thresholdWarning = document.getElementById('threshold-warning');
-            const threshold = region === 'na' ? 50 : region === 'non_na' ? (role === 'leader' ? 60 : 0) : 0;
-
-            const thresholdText = region === 'na' ? '>50%' : (role === 'leader' ? '60%' : '无');
-            if (achievementRate < threshold) {
-                thresholdWarning.textContent = `⚠️ 起付线: ${thresholdText} - 未达到起付线,不能发放奖金`;
-                document.getElementById('threshold-section').className = 'bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl';
-                document.getElementById('threshold-section').querySelector('p').className = 'text-red-800 text-sm';
-            } else {
-                thresholdWarning.textContent = `✅ 起付线: ${thresholdText} - 已达到起付线,可以发放奖金`;
-                document.getElementById('threshold-section').className = 'bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl';
-                document.getElementById('threshold-section').querySelector('p').className = 'text-green-800 text-sm';
-            }
+            const regionName = region === 'na' ? '北美' : '非北美';
+            return `抱歉,我没有完全理解您的问题。😊\n\n我可以帮您查询${regionName}地区的规则:\n\n📊 查询规则:\n• 综合完成率计算\n• 收入完成率计算\n• 薪酬结构/固浮比\n• 发放时间\n• 起付线\n• 试用期规则\n• 离职结算\n• 产假规则\n\n💡 您可以试试:\n"销售考核公式是什么?"\n"奖金怎么算?"\n"起付线是多少?"\n"奖金发放频次?"`;
         }
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('页面已加载,初始化中...');
             console.log('sendQuestion 函数:', typeof sendQuestion);
-            console.log('switchTab 函数:', typeof switchTab);
-            updateCalculator();
+            console.log('verifyEmployee 函数:', typeof verifyEmployee);
             console.log('初始化完成');
         });
 
